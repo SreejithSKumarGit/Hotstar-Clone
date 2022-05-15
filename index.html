@@ -5,8 +5,202 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hotstar </title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oleo+Script+Swash+Caps:wght@700&family=Poppins:ital@1&family=Square+Peg&display=swap');
+        
+        body
+        {
+            background-image: url("https://png.pngtree.com/background/20210711/original/pngtree-simple-popcorn-watch-movie-source-file-h5-background-material-picture-image_1123408.jpg");
+        }
+        #container
+        {
+            text-align: center;
+            height: 450px;
+            border: 1px solid black;
+            background-image: url("https://png.pngtree.com/background/20210710/original/pngtree-european-business-movie-poster-board-vector-background-material-picture-image_1006301.jpg");
+            background-size: cover;
+        }
+        #container >h1{
+            font-family: 'Oleo Script Swash Caps', cursive;
+            font-weight: bolder; 
+            font-size: 66px;
+            color: orangered;
+            text-shadow: brown;
+        }
+        #searchContainer > div > img
+        {
+            width: 50%;
+            height: 100%; 
+        }
+
+        
+        #searchContainer > div > p
+        {
+         font-weight: bold;
+        }
+        #searchContainer
+        {
+            margin: auto;
+            width: 65%;
+            height: 230px;
+            font-size: 20px;
+            background-color: aliceblue;
+            font-family: 'Poppins', sans-serif;
+            overflow-y: scroll;
+            display: none;    
+        }
+        #searchContainer > div
+        {
+            border: 1px solid black;
+            display: grid;
+            grid-template-columns: repeat(2,1fr);
+            gap: 5px;
+        }
+
+        #searchInput
+        {
+            width: 65%;
+            height: 35px;
+            border-radius: 5px;
+            font-size: 25px;
+            font-family: 'Poppins', sans-serif;
+            box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+        }
+        #movieDetails > div > img
+        {
+            width: 100%;
+            height: 100%;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        #movieDetails
+        {
+            margin-top: 10px;
+            display: flex;
+        }
+        #movieDetails > div
+        {
+            width: 100%;
+            margin: auto; 
+            box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px; 
+            text-align: center;
+            border-radius: 8px;
+            font-size: 25px;
+            font-family: 'Poppins', sans-serif;
+            background-color: bisque;
+        }
+        #movieDetails > div > div
+        {
+            display: grid;
+            grid-template-columns: repeat(4,1fr);
+            row-gap: 38px;
+        }
+        #movieDetails > div > div > div >img
+        {
+            width: 90%;
+            height: 80%;
+        }
+    </style>
 </head>
 <body>
-    
-</body>
+    <div id="container">
+        <h1>Movie Buffs</h1>
+        <input id="searchInput" type="text" oninput="debounce(searchMovie,1000)">
+        <div id="searchContainer">
+        </div>
+    </div>
+    <div id="movieDetails">
+
+    </div>
+    <script>
+    async function searchMovie()
+    {
+        try  
+        {
+            let query=document.getElementById("searchInput").value;
+            let res= await fetch(`https://api.themoviedb.org/3/search/movie?api_key=42c988417a53dbee13aeb09bfe7b8ef5&query=${query}`);
+            let data= await res.json();
+            displayData(data.results);
+        }
+        catch (error) 
+        {
+            console.log("Error : "+ error);  
+        }
+    }
+    function displayData(data)
+    {   
+        
+        document.getElementById("searchContainer").style.display="none";
+        document.getElementById("searchContainer").innerHTML="";
+        
+        data.forEach(element => {
+            
+            let movieCard=document.createElement('div');
+            let movieImg=document.createElement('img');
+            movieImg.src=`https://image.tmdb.org/t/p/original/${element.poster_path}`;
+            let movieTitle=document.createElement('p');
+            movieTitle.textContent=element.original_title;
+            movieCard.append(movieImg,movieTitle);
+            movieCard.addEventListener('click',function()
+            {
+                displayMovieData(element);
+            });
+            
+            document.getElementById("searchContainer").append(movieCard);
+            document.getElementById("searchContainer").style.display="block";
+        });
+          
+    }
+     async function displayMovieData(data)
+    {   
+        console.log(data);
+        document.getElementById("movieDetails").innerHTML="";
+        document.getElementById("searchContainer").style.display="none";
+        let movieCard=document.createElement('div');
+        let movieImg=document.createElement('img');
+        movieImg.src=`https://image.tmdb.org/t/p/original/${data.poster_path}`;
+        let movieTitle=document.createElement('h3');
+        movieTitle.textContent=data.original_title;
+        let movieRelease=document.createElement('h3');
+        movieRelease.textContent="Release Date: " +data.release_date;
+        let movieRating=document.createElement('h3');
+        movieRating.textContent="IMDB Rating : "+data.vote_average;
+         let res= await fetchCast(data.id);
+         let castCard=document.createElement('div');
+         res.forEach(element => {
+             let castObjCard=document.createElement('div');
+             let castImg=document.createElement('img');
+             castImg.src=`https://image.tmdb.org/t/p/original/${element.profile_path}`;
+             let castName=document.createElement('p');
+             castName.textContent=element.name;
+             castObjCard.append(castImg,castName);
+             castCard.append(castObjCard); 
+         });
+        movieCard.append(movieImg,movieTitle,movieRelease,movieRating,castCard);
+        document.getElementById("movieDetails").append(movieCard);
+    }
+    async function fetchCast(id)
+    {
+        try {
+            let res= await fetch(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=42c988417a53dbee13aeb09bfe7b8ef5&language=en-US`);
+            let data=await res.json();
+            return data.cast;
+        } catch (error) {
+            
+        }
+    }
+    let timerId;
+    function debounce(func,delay)
+    {
+        if(timerId)
+        {
+            clearTimeout(timerId);
+        }
+           timerId= setTimeout(function(){
+                func();
+            },delay);
+    }
+    //https://api.themoviedb.org/3/search/movie?api_key=42c988417a53dbee13aeb09bfe7b8ef5&language=en-US&page=1&include_adult=false&query=Avengers//
+    </script>
+    </body>
 </html>
